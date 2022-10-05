@@ -1,8 +1,9 @@
 use image::{ImageBuffer, Rgba};
-use std::io::{stdin, stdout, Read, Write};
+use std::io::{stdin, Read};
+use rand::Rng;
 
 struct State {
-    data: Vec<bool>, // make it 2D
+    data: Vec<bool>,
     size: (usize, usize),
 }
 
@@ -56,6 +57,7 @@ impl State {
     }
 
     pub fn draw(&self, name: &str) {
+        let filename = format!("{}.png", name);
         let x: u32 = self.size.0.try_into().unwrap();
         let y: u32 = self.size.1.try_into().unwrap();
 
@@ -83,57 +85,74 @@ impl State {
         let y_resize: u32 = ( y as f32 * factor).floor() as u32;
         let resize = image::imageops::resize(&buffer, x_resize, y_resize, image::imageops::FilterType::Nearest);
 
-        resize.save(name).unwrap();
+        resize.save(filename).unwrap();
     }
 
     pub fn next_tick(self) -> State {
-        let mut new_matrix = State::create_empty(self.size.0, self.size.1);
+        let mut new_state = State::create_empty(self.size.0, self.size.1);
         for i in 0..self.size.0 {
             for j in 0..self.size.1 {
                 let neigh = self.neigh_count(i, j);
-                let mut cell = self.get_cell(i, j);
+                let cell = self.get_cell(i, j);
                 if cell {
                     if neigh == 2 || neigh == 3 {
-                        *new_matrix.get_cell_mut(i, j) = true;
+                        *new_state.get_cell_mut(i, j) = true;
                     }
                 } else {
                     if neigh == 3 {
-                        cell = true;
+                        *new_state.get_cell_mut(i, j) = true;
                     }
                 }
             }
         };
+        if new_state.data == self.data {
+            new_state.randomize(3);
+        }
 
-        new_matrix
+        if new_state.data.iter().filter(|&n| *n == true).count() < 3 {
+            new_state.randomize(5);
+        }
+
+        let mut rng = rand::thread_rng();
+        if rng.gen_range(1..6) == 1 {
+            new_state.randomize(1);
+        }
+
+        new_state
+    }
+
+    pub fn randomize(&mut self, num: u8) {
+        let mut new_matrix = self.data.clone();
+        let mut rng = rand::thread_rng();
+        for _ in 0..num {
+            let i = rng.gen_range(0..(self.size.0 * self.size.1));
+            new_matrix[i] = !new_matrix[i];
+        }
+        self.data = new_matrix;
     }
 }
 
-fn generate(x:usize, y:usize, data: Vec<bool>, id: &str) -> State {
+fn generate(x:usize, y:usize, data: Vec<bool>, name: &str) -> State {
     let state = State::new(data, (x, y));
-    let filename: String = format!("{}.png", id);
-    state.draw(&filename);
-    state
-}
-
-fn next_tick(state: State, id: &str) -> State {
-    let state = state.next_tick();
-    let filename: String = format!("{}.png", id);
-    state.draw(&filename);
+    state.draw(&name);
     state
 }
 
 fn main() {
+    //let data = vec![false; 36];
     let data = vec![false, false, false, false, false, false,
-                    false, false, true, true, false, false,
-                    false, false, true, true, false, false,
-                    false, false, true, false, false, false,
-                    false, false, true, false, false, false,
-                    false, false, false, false, false, false,];
-    let mut state = generate(6, 6, data, "test");
+                                false, false, true, true, false, false,
+                                false, false, true, true, false, false,
+                                false, false, false, false, false, false,
+                                false, false, false, false, false, false,
+                                false, false, false, false, false, false,];
+    let name = "test";
+    let mut state = generate(6, 6, data, name);
+    state.draw(name);
     loop {
-        let mut stdout = stdout();
-        stdout.write(b"Press enter\n").unwrap();
+        println!("Press enter");
         stdin().read(&mut [0, 0]).unwrap();
-        state = next_tick(state, "test");
+        state = state.next_tick();
+        state.draw(name);
     }
 }
