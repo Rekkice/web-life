@@ -1,4 +1,4 @@
-extern crate console_error_panic_hook;
+// extern crate console_error_panic_hook;
 
 use wasm_bindgen::prelude::*;
 
@@ -35,6 +35,11 @@ impl fmt::Display for State {
 
 #[wasm_bindgen]
 impl State {
+    pub fn get_cell(&self, x: usize, y: usize) -> bool {
+        let i = self.size.0 * y;
+        self.data[i + x]
+    }
+
     pub fn create_empty(n: usize, m: usize) -> Self {
         let v = vec![false; n * m];
         Self { data: v, size: (n, m) }
@@ -86,6 +91,14 @@ impl State {
     pub fn get_string(&self) -> String {
         self.to_string()
     }
+
+    pub fn get_x(&self) -> u8 {
+        self.size.0 as u8
+    }
+
+    pub fn get_y(&self) -> u8 {
+        self.size.1 as u8
+    }
 }
 
 impl State {
@@ -93,10 +106,6 @@ impl State {
         Self { data, size: (x, y) }
     }
 
-    pub fn get_cell(&self, x: usize, y: usize) -> bool {
-        let i = self.size.0 * y;
-        self.data[i + x]
-    }
 
     pub fn get_cell_mut(&mut self, x: usize, y: usize) -> &mut bool {
         let i = self.size.0 * y;
@@ -162,7 +171,7 @@ impl State {
 
 #[wasm_bindgen]
 pub fn init_state(x: usize, y: usize) -> State {
-    console_error_panic_hook::set_once();
+    // console_error_panic_hook::set_once();
     let data = vec![false; x * y];
     let mut state = State::new(data, x, y);
     state.randomize((x as u8 * y as u8) / 3);

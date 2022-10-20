@@ -7,11 +7,12 @@
     "preview": "vite preview --port 4173"
   },
   "dependencies": {
-    "vue": "^3.2.38",
-    "web_life": "file:./rust/pkg"
+    "vite-plugin-wasm": "^3.0.0",
+    "vue": "^3.2.38"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^3.0.3",
-    "vite": "^3.0.9"
+    "vite": "^3.0.9",
+    "vite-plugin-top-level-await": "^1.1.1"
   }
 }
